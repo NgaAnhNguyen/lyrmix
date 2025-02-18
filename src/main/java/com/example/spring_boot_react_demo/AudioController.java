@@ -40,6 +40,10 @@ public class AudioController {
             return "Error while cutting audio.";
         }
     }
+    @PostMapping("/")
+    public String hello() {
+        return "Hello World!";
+    }
     @PostMapping("/merge-audio")
     public String mergeAudio(@RequestParam("file1") MultipartFile file1,
                              @RequestParam("file2") MultipartFile file2) {
