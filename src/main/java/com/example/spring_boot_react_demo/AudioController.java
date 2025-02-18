@@ -40,7 +40,7 @@ public class AudioController {
             return "Error while cutting audio.";
         }
     }
-    @PostMapping("/")
+    @GetMapping("/")
     public String hello() {
         return "Hello World!";
     }
