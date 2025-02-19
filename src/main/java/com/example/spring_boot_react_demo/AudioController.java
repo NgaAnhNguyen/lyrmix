@@ -2,6 +2,8 @@ package com.example.spring_boot_react_demo;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+
 import java.io.File;
 import java.io.IOException;
 
@@ -14,16 +16,34 @@ public class AudioController {
                            @RequestParam("start") String startTime,
                            @RequestParam("end") String endTime) {
         try {
-            // Lưu file tạm thời
-            File tempFile = File.createTempFile("temp_audio_", ".mp3");
+
+            // Kiểm tra loại tệp (audio hoặc video)
+            String fileType = FileTypeUtil.getFileType(file);
+
+            // Lưu file tạm thời (dùng .mp4 cho video và .mp3 cho audio)
+            String fileExtension = fileType.equals("video") ? ".mp4" : ".mp3";
+            File tempFile = File.createTempFile("temp_media_", fileExtension);
             file.transferTo(tempFile);
 
-            // Lệnh FFmpeg để cắt file
+            // Cắt video hoặc audio
             String outputFilePath = "output_" + tempFile.getName();
-            String ffmpegCommand = String.format(
-                    "ffmpeg -i %s -ss %s -to %s -c copy %s",
-                    tempFile.getAbsolutePath(), startTime, endTime, outputFilePath
-            );
+            String ffmpegCommand;
+
+            if ("video".equals(fileType)) {
+                // Lệnh cắt video
+                ffmpegCommand = String.format(
+                        "ffmpeg -i %s -ss %s -to %s -c:v copy -c:a copy %s",
+                        tempFile.getAbsolutePath(), startTime, endTime, outputFilePath
+                );
+            } else if ("audio".equals(fileType)) {
+                // Lệnh cắt audio
+                ffmpegCommand = String.format(
+                        "ffmpeg -i %s -ss %s -to %s -c copy %s",
+                        tempFile.getAbsolutePath(), startTime, endTime, outputFilePath
+                );
+            } else {
+                return "Unsupported file type.";
+            }
 
             // Thực thi lệnh FFmpeg
             ProcessBuilder processBuilder = new ProcessBuilder(ffmpegCommand.split(" "));
@@ -31,12 +51,11 @@ public class AudioController {
             Process process = processBuilder.start();
             process.waitFor();
 
-            // Trả về đường dẫn tới file đầu ra
-            return "Audio file cut successfully. Output file: " + outputFilePath;
+            return "Media file cut successfully. Output file: " + outputFilePath;
 
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
-            return "Error while cutting audio.";
+            return "Error while cutting media.";
         }
     }
     @GetMapping("/")
